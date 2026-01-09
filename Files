@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>For You 💘</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="bg-hearts" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="hero">
+      <div class="badge">💌 A little link, for a big moment</div>
+      <h1 id="title">Hi, my love.</h1>
+      <p class="sub" id="subtitle">
+        I made you a tiny world. Tap around — there are memories inside.
+      </p>
+
+      <div class="cta-row">
+        <button class="btn primary" id="btnStart">Open the first letter ✨</button>
+        <button class="btn ghost" id="btnMusic">Toggle music ♪</button>
+      </div>
+      <small class="hint">Tip: try the “Memories”, “Photos”, and “Final Question” buttons.</small>
+    </header>
+
+    <section class="grid">
+      <button class="card" data-open="letter">
+        <span class="icon">📝</span>
+        <span class="label">Letter</span>
+        <span class="desc">A few words I want you to keep.</span>
+      </button>
+
+      <button class="card" data-open="memories">
+        <span class="icon">🗓️</span>
+        <span class="label">Memories</span>
+        <span class="desc">Little moments that stayed with me.</span>
+      </button>
+
+      <button class="card" data-open="photos">
+        <span class="icon">🖼️</span>
+        <span class="label">Photos</span>
+        <span class="desc">Tap to view, swipe on phone.</span>
+      </button>
+
+      <button class="card" data-open="promise">
+        <span class="icon">🤍</span>
+        <span class="label">Promise</span>
+        <span class="desc">The kind of love I’m offering.</span>
+      </button>
+
+      <button class="card final" data-open="question">
+        <span class="icon">💍</span>
+        <span class="label">Final Question</span>
+        <span class="desc">When you’re ready…</span>
+      </button>
+    </section>
+
+    <footer class="footer">
+      <span>Made with intent, not perfection.</span>
+    </footer>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card" role="document">
+      <button class="x" id="btnClose" aria-label="Close">✕</button>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Optional background music (replace with your own mp3 if you want) -->
+  <audio id="bgm" loop preload="auto">
+    <!-- Put an mp3 in the same folder named song.mp3, then uncomment next line -->
+    <!-- <source src="song.mp3" type="audio/mpeg" /> -->
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+const modal = document.getElementById("modal");
+const modalBody = document.getElementById("modalBody");
+const btnClose = document.getElementById("btnClose");
+const btnStart = document.getElementById("btnStart");
+const btnMusic = document.getElementById("btnMusic");
+const bgm = document.getElementById("bgm");
+
+const CONTENT = {
+  letter: `
+    <h2>Letter 📝</h2>
+    <p>
+      I don’t want this to be perfect. I want it to be <b>real</b>.
+      You’ve become one of my favourite places to return to — calm, bright, and strangely
+      comforting even when everything else is loud.
+    </p>
+    <p>
+      So here’s the truth, written plainly:
+      <br/>I choose you — on the easy days, and the messy ones too.
+    </p>
+  `,
+  memories: `
+    <h2>Memories 🗓️</h2>
+    <p>Tap each one — they open like little drawers.</p>
+    <div class="accordion">
+      ${[
+        ["The first time I realised", "I was paying attention to the smallest things you do — like it mattered."],
+        ["A moment I replay", "That look you gave me that felt like 'I’m here' without words."],
+        ["A quiet detail", "How your presence changes a room without trying."],
+      ].map(([t, d], i) => `
+        <button class="acc" data-i="${i}">
+          <b>${t}</b><br/><span style="color:rgba(200,196,230,.85)">${d}</span>
+        </button>
+      `).join("")}
+    </div>
+    <style>
+      .acc{width:100%; text-align:left; margin:10px 0; padding:12px 12px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); color:#fff; cursor:pointer}
+      .acc:hover{border-color: rgba(255,255,255,.22)}
+    </style>
+  `,
+  photos: `
+    <h2>Photos 🖼️</h2>
+    <p>Add your own images by replacing the <code>src</code> links in <b>script.js</b>.</p>
+    <div class="gallery">
+      <img alt="Memory 1" src="https://images.unsplash.com/photo-1520975958225-6d00f48a3c3f?auto=format&fit=crop&w=900&q=60" />
+      <img alt="Memory 2" src="https://images.unsplash.com/photo-1526481280695-3c687fd643ed?auto=format&fit=crop&w=900&q=60" />
+      <img alt="Memory 3" src="https://images.unsplash.com/photo-1520975682073-58f7f66d6a0c?auto=format&fit=crop&w=900&q=60" />
+      <img alt="Memory 4" src="https://images.unsplash.com/photo-1520975680854-55fdb1a6e4b1?auto=format&fit=crop&w=900&q=60" />
+    </div>
+    <p style="margin-top:12px; opacity:.8">Tip: keep photos lightweight (under ~1–2MB each) so it loads fast.</p>
+  `,
+  promise: `
+    <h2>Promise 🤍</h2>
+    <p>
+      I can’t promise a life with no storms.
+      But I can promise I’ll be the person who doesn’t run when the sky changes.
+    </p>
+    <p>
+      I’ll listen. I’ll learn you. I’ll choose you — again and again.
+    </p>
+  `,
+  question: `
+    <h2>Final Question 💍</h2>
+    <p>
+      Before you answer, just know:
+      you’re not clicking a button — you’re stepping into a future I want to build with you.
+    </p>
+    <hr/>
+    <div class="q">
+      <button class="btn primary" id="yesBtn">Yes — I will 💘</button>
+      <button class="btn ghost" id="noBtn">No (try again 😈)</button>
+    </div>
+    <p id="after" style="margin-top:12px;"></p>
+    <style>
+      .q{display:flex; gap:10px; flex-wrap:wrap}
+    </style>
+  `
+};
+
+function openModal(key){
+  modalBody.innerHTML = CONTENT[key] ?? "<p>Missing content.</p>";
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+
+  // Attach question button handlers if present
+  const yesBtn = document.getElementById("yesBtn");
+  const noBtn = document.getElementById("noBtn");
+  const after = document.getElementById("after");
+
+  if(yesBtn && noBtn && after){
+    yesBtn.addEventListener("click", () => {
+      sparkles(90);
+      after.innerHTML = `
+        <b>Then it’s official.</b><br/>
+        Meet me in real life — I have something to ask you properly. 🥺
+      `;
+      noBtn.disabled = true;
+    });
+
+    // playful "no" button that moves
+    noBtn.addEventListener("mouseenter", () => dodge(noBtn));
+    noBtn.addEventListener("click", () => dodge(noBtn));
+  }
+}
+
+function closeModal(){
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+function dodge(btn){
+  const dx = (Math.random() * 180 - 90);
+  const dy = (Math.random() * 120 - 60);
+  btn.style.transform = `translate(${dx}px, ${dy}px)`;
+  setTimeout(()=> btn.style.transform = "", 500);
+}
+
+function sparkles(n=40){
+  for(let i=0;i<n;i++){
+    const s = document.createElement("div");
+    s.className = "sparkle";
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
+    const dx = (Math.random() * 260 - 130) + "px";
+    const dy = (Math.random() * 260 - 130) + "px";
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    s.style.setProperty("--dx", dx);
+    s.style.setProperty("--dy", dy);
+    document.body.appendChild(s);
+    setTimeout(()=> s.remove(), 950);
+  }
+}
+
+document.querySelectorAll("[data-open]").forEach(el => {
+  el.addEventListener("click", () => openModal(el.dataset.open));
+});
+
+btnClose.addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => {
+  if(e.target === modal) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape") closeModal();
+});
+
+// Start button opens letter + sparkles
+btnStart.addEventListener("click", () => {
+  openModal("letter");
+  sparkles(40);
+});
+
+// Music toggle (will only work once you add a real mp3)
+btnMusic.addEventListener("click", async () => {
+  try{
+    if(bgm.paused){
+      await bgm.play();
+      btnMusic.textContent = "Music: on ♪";
+    }else{
+      bgm.pause();
+      btnMusic.textContent = "Toggle music ♪";
+    }
+  }catch(err){
+    alert("Add a song.mp3 in the folder first (see index.html). iOS also requires a tap to start audio.");
+  }
+});
+
+:root{
+  --bg:#0b0b12;
+  --card:#141427cc;
+  --card2:#1b1b33cc;
+  --text:#f5f3ff;
+  --muted:#c8c4e6;
+  --pink:#ff4fa7;
+  --pink2:#ff88c9;
+  --border:rgba(255,255,255,.12);
+  --shadow: 0 18px 60px rgba(0,0,0,.55);
+  --radius: 18px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: radial-gradient(1200px 800px at 20% 10%, rgba(255,79,167,.18), transparent 60%),
+              radial-gradient(1000px 700px at 80% 30%, rgba(255,136,201,.12), transparent 60%),
+              linear-gradient(180deg, #07070d, var(--bg));
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+.bg-hearts{
+  position:fixed; inset:0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,79,167,.13) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 20%, rgba(255,136,201,.10) 0 2px, transparent 3px),
+    radial-gradient(circle at 40% 80%, rgba(255,79,167,.10) 0 2px, transparent 3px);
+  filter: blur(0.2px);
+  pointer-events:none;
+  animation: floaty 12s ease-in-out infinite alternate;
+  opacity:.85;
+}
+@keyframes floaty{
+  from{transform: translateY(-6px)}
+  to{transform: translateY(10px)}
+}
+
+.wrap{
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 42px 18px 70px;
+}
+
+.hero{
+  background: linear-gradient(180deg, rgba(20,20,39,.65), rgba(20,20,39,.25));
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px 22px;
+  box-shadow: var(--shadow);
+}
+
+.badge{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,79,167,.14);
+  border:1px solid rgba(255,79,167,.28);
+  color: var(--pink2);
+  font-weight:600;
+  font-size: 13px;
+}
+
+h1{
+  margin: 14px 0 6px;
+  font-size: clamp(30px, 4.2vw, 46px);
+  letter-spacing: -0.02em;
+}
+.sub{
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.cta-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin: 12px 0 6px;
+}
+.btn{
+  border-radius: 999px;
+  border:1px solid var(--border);
+  padding: 11px 16px;
+  cursor:pointer;
+  color:var(--text);
+  background: rgba(255,255,255,.06);
+  transition: transform .08s ease, background .2s ease, border-color .2s ease;
+}
+.btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22)}
+.btn:active{transform: translateY(0px) scale(.99)}
+.btn.primary{
+  background: linear-gradient(90deg, rgba(255,79,167,.95), rgba(255,136,201,.85));
+  border-color: rgba(255,79,167,.35);
+  color:#120814;
+  font-weight:700;
+}
+.btn.ghost{
+  background: rgba(255,255,255,.04);
+}
+
+.hint{display:block;color:rgba(200,196,230,.75); margin-top:8px}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.card{
+  grid-column: span 6;
+  text-align:left;
+  border-radius: var(--radius);
+  border:1px solid var(--border);
+  padding: 16px 16px;
+  background: linear-gradient(180deg, rgba(27,27,51,.66), rgba(20,20,39,.35));
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  cursor:pointer;
+  transition: transform .12s ease, border-color .2s ease;
+  position:relative;
+  overflow:hidden;
+}
+.card:hover{transform: translateY(-2px); border-color: rgba(255,255,255,.22)}
+
+.card.final{
+  grid-column: span 12;
+  border-color: rgba(255,79,167,.35);
+  background: linear-gradient(90deg, rgba(255,79,167,.16), rgba(255,136,201,.10));
+}
+
+.icon{font-size: 22px; display:block}
+.label{display:block; font-weight:800; margin-top: 6px}
+.desc{display:block; margin-top: 3px; color: rgba(200,196,230,.82); font-size: 14px}
+
+.footer{
+  margin-top: 22px;
+  color: rgba(200,196,230,.6);
+  text-align:center;
+  font-size: 13px;
+}
+
+/* Modal */
+.modal{
+  position:fixed; inset:0;
+  display:none;
+  place-items:center;
+  background: rgba(0,0,0,.55);
+  padding: 18px;
+  z-index: 50;
+}
+.modal.show{display:grid}
+.modal-card{
+  width:min(720px, 96vw);
+  max-height: 85vh;
+  overflow:auto;
+  border-radius: 18px;
+  border:1px solid rgba(255,255,255,.16);
+  background: linear-gradient(180deg, rgba(20,20,39,.95), rgba(12,12,22,.95));
+  box-shadow: var(--shadow);
+  position:relative;
+  padding: 18px 18px 14px;
+}
+.x{
+  position:absolute;
+  right: 10px; top: 10px;
+  border:none;
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor:pointer;
+}
+.modal-body h2{margin: 6px 0 10px}
+.modal-body p{color: rgba(200,196,230,.92); line-height: 1.6}
+
+hr{border:none;border-top:1px solid rgba(255,255,255,.12); margin: 14px 0}
+
+/* Gallery */
+.gallery{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.gallery img{
+  width:100%;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.14);
+  cursor:pointer;
+}
+
+/* Confetti-ish sparkles */
+.sparkle{
+  position:fixed;
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  pointer-events:none;
+  background: rgba(255,79,167,.95);
+  box-shadow: 0 0 18px rgba(255,79,167,.8);
+  animation: pop 900ms ease-out forwards;
+  z-index: 60;
+}
+@keyframes pop{
+  from{transform: translate(0,0) scale(1); opacity:1}
+  to{transform: translate(var(--dx), var(--dy)) scale(.2); opacity:0}
+}
+
+@media (max-width: 640px){
+  .card{grid-column: span 12}
+  .gallery{grid-template-columns: 1fr}
+}
